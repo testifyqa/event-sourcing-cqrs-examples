@@ -1,32 +1,36 @@
 package bankservice.it;
 
-import static java.util.UUID.randomUUID;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import java.util.UUID;
-import javax.ws.rs.core.Response;
+import bankservice.it.account.AccountCommands;
+import bankservice.it.account.AccountQueries;
+import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
-class AccountIT extends BaseIT {
+import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    @Test
-    void returnAccount() {
-        String clientId = UUID.randomUUID().toString();
-        String accountId = stateSetup.newAccount(clientId);
-        Response response = resourcesClient.getAccount(accountId);
-        JsonNode account = response.readEntity(JsonNode.class);
-        assertThat(account.get("id").asText(), equalTo(accountId));
-        assertThat(account.get("clientId").asText(), equalTo(clientId.toString()));
-        assertThat(account.get("balance").asDouble(), equalTo(0.0));
-        assertThat(response.getStatus(), equalTo(200));
-    }
+public class AccountIT {
 
-    @Test
-    void returnAccountNotFound() {
-        Response response = resourcesClient.getAccount(randomUUID().toString());
-        response.close();
-        assertThat(response.getStatus(), equalTo(404));
-    }
+  private AccountCommands accountCommands = new AccountCommands();
+  private AccountQueries accountQueries = new AccountQueries();
+
+  @Test
+  void getAccount_ofExistingClient_shouldReturnAccountDetails() {
+    String clientID = accountCommands.setNewClient("Donald Trump", "donald@trump.com");
+    Response createAccountResponse = accountCommands.createAccount(clientID);
+    String accountID = accountCommands.getID(createAccountResponse);
+
+    Response accountQueryResponse = accountQueries.getAccount(accountID);
+    assertAll(
+        "account",
+        () -> assertEquals(clientID, accountQueryResponse.path("clientId")),
+        () -> assertEquals(0, (float) accountQueryResponse.path("balance")),
+        () -> assertEquals(accountID, accountQueryResponse.path("id")));
+  }
+
+  @Test
+  void getAccount_ofNonExistingClient_shouldReturnError() {
+    Response response = accountQueries.getAccount(randomUUID().toString());
+    assertEquals(404, response.statusCode());
+  }
 }

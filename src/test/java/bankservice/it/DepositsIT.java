@@ -1,41 +1,39 @@
 package bankservice.it;
 
-import static java.math.BigDecimal.TEN;
-import static java.util.UUID.randomUUID;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.math.BigDecimal;
-import javax.ws.rs.core.Response;
+import bankservice.it.account.AccountCommands;
+import bankservice.it.account.AccountQueries;
+import bankservice.it.deposit.DepositCommands;
+import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
-class DepositsIT extends BaseIT {
+import java.util.UUID;
+
+import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class DepositsIT {
+
+    private DepositCommands depositCommands = new DepositCommands();
+    private AccountCommands accountCommands = new AccountCommands();
+    private AccountQueries accountQueries = new AccountQueries();
 
     @Test
-    void returnAccountNotFound() {
-        ObjectNode deposit = resourcesDtos.depositDto(TEN);
-        Response response = resourcesClient.postDeposit(randomUUID().toString(), deposit);
-        response.close();
-        assertThat(response.getStatus(), equalTo(404));
+    void makeAccountDeposit_forValidAccount_shouldAddCorrectAmountToBalance() {
+        UUID clientID = UUID.fromString(accountCommands.setNewClient("Jasper Beardly", "jasper@beardly.com"));
+        Response createAccountResponse = accountCommands.createAccount(clientID.toString());
+        UUID accountID = UUID.fromString(accountQueries.getID(createAccountResponse));
+
+        depositCommands.setAccount(accountID, clientID);
+        Response makeDepositResponse = depositCommands.makeDeposit(accountID.toString(), 1000000.50f);
+        assertEquals(204, makeDepositResponse.statusCode());
+
+        Response accountQueryResponse = accountQueries.getAccount(accountID.toString());
+        assertEquals(1000000.50f, (float) accountQueryResponse.path("balance"));
     }
 
     @Test
-    void depositAccount() {
-        String accountId = stateSetup.newAccount(randomUUID().toString());
-        BigDecimal amount = TEN;
-        {
-            ObjectNode deposit = resourcesDtos.depositDto(amount);
-            Response response = resourcesClient.postDeposit(accountId, deposit);
-            response.close();
-            assertThat(response.getStatus(), equalTo(204));
-        }
-        {
-            Response response = resourcesClient.getAccount(accountId);
-            JsonNode account = response.readEntity(JsonNode.class);
-            assertThat(account.get("balance").asDouble(), equalTo(amount.doubleValue()));
-            assertThat(response.getStatus(), equalTo(200));
-        }
+    void makeAccountDeposit_forNonExistentAccount_shouldReturn404Error() {
+        Response response = depositCommands.makeDeposit(randomUUID().toString(), 12345.67f);
+        assertEquals(404, response.statusCode());
     }
 }

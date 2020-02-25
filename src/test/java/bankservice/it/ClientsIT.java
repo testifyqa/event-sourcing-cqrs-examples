@@ -1,24 +1,39 @@
 package bankservice.it;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.ArrayList;
-import javax.ws.rs.core.Response;
-import org.glassfish.jersey.uri.UriTemplate;
+import bankservice.it.client.ClientCommands;
+import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-class ClientsIT extends BaseIT {
+import java.util.stream.Stream;
 
-    @Test
-    void newClient() {
-        ObjectNode clientDto = resourcesDtos.clientDto("John", "john@example.com");
-        Response response = resourcesClient.postClient(clientDto);
-        response.close();
-        assertThat(response.getStatus(), equalTo(201));
-        UriTemplate clientUriTemplate = resourcesClient.getResourcesUrls().clientUriTemplate();
-        assertTrue(clientUriTemplate.match(response.getHeaderString("Location"), new ArrayList<>()));
-    }
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class ClientsIT {
+
+  private ClientCommands clientCommands = new ClientCommands();
+
+  @Test
+  void createClient_withValidData_shouldReturn201Success() {
+    Response response = clientCommands.createClient("Victor Valid", "victor@valid.com");
+    assertEquals(201, response.statusCode());
+  }
+
+  @ParameterizedTest
+  @MethodSource("provideInvalidClientData")
+  void createClient_withInvalidData_shouldReturn422Error(String name, String email) {
+    Response response = clientCommands.createClient(name, email);
+    assertEquals(422, response.statusCode());
+  }
+
+  private static Stream<Arguments> provideInvalidClientData() {
+    return Stream.of(
+        Arguments.of("Ivan", "Invalid"),
+        Arguments.of(" ", "my@email.com"),
+        Arguments.of("Tommy", " "),
+        Arguments.of(" ", " "),
+        Arguments.of(null, null));
+  }
 }
