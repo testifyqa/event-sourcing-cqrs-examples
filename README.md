@@ -15,4 +15,7 @@ This is a forked project of https://github.com/andreschaffer/event-sourcing-cqrs
 ` java -jar target/bank-service-1.0-SNAPSHOT.jar server src/environments/development.yml `
 
 ### Running the integration tests
+1. Package the JAR
+2. Run the application
+3. Run the following command: 
 `mvn clean verify`
