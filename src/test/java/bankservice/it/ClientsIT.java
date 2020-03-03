@@ -1,6 +1,6 @@
 package bankservice.it;
 
-import bankservice.it.client.ClientCommands;
+import bankservice.it.services.client.ClientCommands;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ClientsIT {
+public class ClientsIT extends Base {
 
   private ClientCommands clientCommands = new ClientCommands();
 

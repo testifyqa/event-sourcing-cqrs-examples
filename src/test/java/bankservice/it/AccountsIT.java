@@ -1,6 +1,6 @@
 package bankservice.it;
 
-import bankservice.it.account.AccountCommands;
+import bankservice.it.services.account.AccountCommands;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -8,13 +8,13 @@ import org.junit.jupiter.api.Test;
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class AccountsIT {
+public class AccountsIT extends Base {
 
   private AccountCommands accountCommands = new AccountCommands();
 
   @Test
   void createAccount_forExistingClient_shouldReturn201StatusCode() {
-    String clientID = accountCommands.setNewClient("Boris Johnson", "boris@johnson.com");
+    String clientID = stateSetup.setNewClient("Boris Johnson", "boris@johnson.com").toString();
     Response response = accountCommands.createAccount(clientID);
     assertEquals(201, response.statusCode());
   }

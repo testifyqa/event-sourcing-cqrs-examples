@@ -1,7 +1,7 @@
 package bankservice.it;
 
-import bankservice.it.client.ClientCommands;
-import bankservice.it.client.ClientQueries;
+import bankservice.it.services.client.ClientCommands;
+import bankservice.it.services.client.ClientQueries;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
 
@@ -9,17 +9,17 @@ import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ClientIT {
+public class ClientIT extends Base {
 
   private ClientCommands clientCommands = new ClientCommands();
   private ClientQueries clientQueries = new ClientQueries();
 
   @Test
   void getClientDetails_usingValidClientID_shouldReturnCorrectDetails() {
-    Response createClientResponse = clientCommands.createClient("Victor Valid", "victor@valid.com");
-    String clientID = clientQueries.getID(createClientResponse);
-
+    String clientID =
+        clientQueries.getID(clientCommands.createClient("Victor Valid", "victor@valid.com"));
     Response clientQueryResponse = clientQueries.getClient(clientID);
+
     assertAll(
         "client",
         () -> assertEquals(clientID, clientQueryResponse.path("id"), "The client ID is incorrect"),
@@ -41,9 +41,7 @@ public class ClientIT {
 
   @Test
   void updateClientDetails_forExistingClient_shouldUpdateSuccessfully() {
-    Response createClientResponse = clientCommands.createClient("Tommy Tester", "tommy@tester.com");
-    String clientID = clientQueries.getID(createClientResponse);
-
+    String clientID = clientQueries.getID(clientCommands.createClient("Tommy Tester", "tommy@tester.com"));
     Response updateClientResponse =
         clientCommands.updateClient(clientID, "Thomas Knee", "tom@testifyqa.com");
 
